@@ -26,11 +26,12 @@ const int brakeA = 9;
 const int brakeB = 8;
 const int dirA = 12;
 const int dirB = 13;
-Stepper myStepper(STEPS, dirA, dirB);
 
 const int STEPS = 200;   // Steps per revolution
 const int MAXPOS = 8;    // Number of stops
 const int POS_STEP = 25; // POS_STEP = STEPS / MAXPOS
+
+Stepper myStepper(STEPS, dirA, dirB);
 
 //#define DEV_ID 2
 volatile int currentPos = 0;
@@ -45,7 +46,7 @@ void setup()
   // Set the RPM of the motor
   // Around 75 is the max without a load
   // lower is with load!
-  myStepper.setSpeed(75);
+  myStepper.setSpeed(90);
   // turn on PWM
   pinMode(pwmA, OUTPUT);
   digitalWrite(pwmA, HIGH);

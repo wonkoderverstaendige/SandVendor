@@ -1,4 +1,6 @@
 const int MAXPOS = 8;
+const int POSWIDTH = 25;
+const int MAXSTEPS = 200;
 
 volatile boolean editMode = 0;
 
@@ -9,25 +11,28 @@ int buttonPin = 4; //push button
 
 // rotary encoder wheel stuff
 volatile int lastEncoded = 0;
-volatile long encoderValue = 0;
-long lastencoderValue = 0;
-long lastState = 0;
+volatile int encoderValue = 1;
+int lastencoderValue = 0;
+
+byte pos = 1;
+byte lastPos = 1;
+
 int lastMSB = 0;
 int lastLSB = 0;
 
 // seven segment display stuff
 const byte dotPin = 12;
 const byte digits[10][7] = {{0,0,0,0,0,0,1},  // = 0
-                      {1,0,0,1,1,1,1},  // = 1
-                      {0,0,1,0,0,1,0},  // = 2
-                      {0,0,0,0,1,1,0},  // = 3
-                      {1,0,0,1,1,0,0},  // = 4
-                      {0,1,0,0,1,0,0},  // = 5
-                      {0,1,0,0,0,0,0},  // = 6
-                      {0,0,0,1,1,1,1},  // = 7
-                      {0,0,0,0,0,0,0},  // = 8
-                      {0,0,0,1,1,0,0}};   // = 9
-const byte digitPins[8] = {5,6,7,8,9,10,11,dotPin}; 
+                            {1,0,0,1,1,1,1},  // = 1
+                            {0,0,1,0,0,1,0},  // = 2
+                            {0,0,0,0,1,1,0},  // = 3
+                            {1,0,0,1,1,0,0},  // = 4
+                            {0,1,0,0,1,0,0},  // = 5
+                            {0,1,0,0,0,0,0},  // = 6
+                            {0,0,0,1,1,1,1},  // = 7
+                            {0,0,0,0,0,0,0},  // = 8
+                            {0,0,0,1,1,0,0}};   // = 9
+const byte digitPins[8] =   {5,6,7,8,9,10,11,dotPin}; 
 
 void setup() {
   Serial.begin (9600);
@@ -50,18 +55,18 @@ void setup() {
   // seven segment display pins
   for (byte i = 0; i < 7; i++) {
     pinMode(digitPins[i], OUTPUT);
+    digitalWrite(digitPins[i], HIGH);
   }
   pinMode(dotPin, OUTPUT);
-
-  encoderValue = 0;
-  sevenSegWrite(encoderValue+1);
+  digitalWrite(dotPin, HIGH);
+  sevenSegWrite(pos);
 }
 
 void loop(){ 
-  if (lastState != encoderValue) {
-    Serial.println(encoderValue+1, DEC);
-    lastState = encoderValue;
-    sevenSegWrite(lastState+1);
+  pos = encoderValue/POSWIDTH;
+  if (lastPos != pos) {
+    lastPos = pos;
+    sevenSegWrite(pos+1);
   }
 }
 
@@ -75,7 +80,7 @@ void updateEncoder(){
 
   if(sum == 0b1101 || sum == 0b0100 || sum == 0b0010 || sum == 0b1011) {
     encoderValue ++;
-    if (encoderValue > MAXPOS-1) encoderValue = MAXPOS-1;
+    if (encoderValue >= MAXSTEPS) encoderValue = MAXSTEPS-1;
   }
   if(sum == 0b1110 || sum == 0b0111 || sum == 0b0001 || sum == 0b1000) {
     encoderValue --;
@@ -87,8 +92,7 @@ void updateEncoder(){
 void sevenSegWrite(byte digit) {
   byte pin = 5;
   for (byte segCount = 0; segCount < 7; ++segCount) {
-    digitalWrite(pin, digits[digit][digitPins[segCount]]);
-    ++pin;
+    digitalWrite(pin+segCount, digits[digit][segCount]);//digitPins[segCount]
   }
 }
 

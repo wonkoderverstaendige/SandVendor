@@ -19,7 +19,7 @@
 #include <Wire.h>
 
 // Setup stepper control
-#include <Stepper.h>
+#include <AccelStepper.h>
 const int pwmA = 3;
 const int pwmB = 11;
 const int brakeA = 9;
@@ -31,7 +31,7 @@ const int STEPS = 200;   // Steps per revolution
 const int MAXPOS = 8;    // Number of stops
 const int POS_STEP = 25; // POS_STEP = STEPS / MAXPOS
 
-Stepper myStepper(STEPS, dirA, dirB);
+AccelStepper myStepper(AccelStepper::DRIVER, dirA, dirB);
 
 //#define DEV_ID 2
 volatile int currentPos = 0;

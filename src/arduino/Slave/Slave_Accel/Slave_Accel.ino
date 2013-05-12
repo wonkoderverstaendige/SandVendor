@@ -31,7 +31,7 @@ const int STEPS = 200;   // Steps per revolution
 const int MAXPOS = 8;    // Number of stops
 const int POS_STEP = 25; // POS_STEP = STEPS / MAXPOS
 
-AccelStepper myStepper(AccelStepper::DRIVER, dirA, dirB);
+AccelStepper stepper(AccelStepper::FULL2WIRE, dirA, dirB);;
 
 //#define DEV_ID 2
 volatile int currentPos = 0;
@@ -43,10 +43,6 @@ void setup()
   Wire.begin(16);                
   Wire.onReceive(receiveEvent);
 
-  // Set the RPM of the motor
-  // Around 75 is the max without a load
-  // lower is with load!
-  myStepper.setSpeed(7);
   // turn on PWM
   pinMode(pwmA, OUTPUT);
   digitalWrite(pwmA, HIGH);
@@ -58,17 +54,23 @@ void setup()
   pinMode(brakeB, OUTPUT);
   digitalWrite(brakeB, LOW);
   
+  stepper.setMaxSpeed(1000);
+  stepper.setAcceleration(500);
+  stepper.moveTo(0);
+  stepper.run();
+  
   Serial.begin(9600);
 }
   
 void loop()
 {
-  if (properPos > MAXPOS-1) {
-    properPos = MAXPOS -1;
-  }
-    if (currentPos != properPos) {
-    moveMotor(properPos);
-  }
+//  if (properPos > MAXPOS-1) {
+//    properPos = MAXPOS -1;
+//  }
+//  if (currentPos != properPos) {
+//    moveMotor(properPos);
+//  }
+  stepper.run();
 }
 
 // function that executes whenever data is received from master
@@ -81,14 +83,14 @@ void receiveEvent(int howMany)
     properPos = Wire.read(); // receive byte as a character
     Serial.println(properPos, DEC);
   }
+  stepper.moveTo(properPos);
 }
 
 void moveMotor(int endPos) {
   Serial.println("Moving...");
   // Move the motor X amount of steps
-  int steps = endPos-currentPos;
+//  int steps = endPos-currentPos;
 //  Serial.println(steps, DEC);
-  myStepper.step(steps*POS_STEP);
   currentPos = endPos;
   Serial.println("Done!");
 }

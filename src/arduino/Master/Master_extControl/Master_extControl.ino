@@ -97,7 +97,7 @@ void loop() {
   if (lastPos != pos) {
     lastPos = pos;
     sevenSegWrite(pos+1);
-    sendPos(pos)
+    //sendPos(encoderValue);
   }
 }
 
@@ -123,6 +123,7 @@ void updateEncoder(){
     if (encoderValue < 0) encoderValue = 0;
   }
   lastEncoded = encoded; //store this value for next time
+  sendPos(encoderValue);
 }
 
 void sevenSegWrite(byte digit) {
@@ -146,5 +147,4 @@ void sendPos(byte pos) {
     Wire.write(pos);          // sends one byte  
     Wire.endTransmission();    // stop transmitting
     currentPos = pos;
-    delay(1000);
 }

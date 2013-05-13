@@ -21,9 +21,7 @@
 #define POSWIDTH 25
 #define MAXSTEPS 200
 
-volatile boolean randPos = 0;
 volatile int currentPos = 0;
-volatile int nextPos = 0;
 
 // interrupt pins (on Mega!!)
 int encoderPin1 = 2;
@@ -39,6 +37,7 @@ int lastMSB = 0;
 int lastLSB = 0;
 byte pos = 1;
 byte lastPos = 1;
+byte lastValue = 0;
 
 // seven segment display stuff
 const byte dotPin = 12;
@@ -84,26 +83,24 @@ void setup()
 }
 
 void loop() {
-//  while (randPos && nextPos == currentPos) { 
-//    nextPos = random(MAXPOS);
-//  }
-//  if (nextPos > MAXPOS-1) {
-//    nextPos = MAXPOS -1;
-//  }
-//  if (currentPos != nextPos) {
-//    sendPos(nextPos);
-//  }
   pos = encoderValue/POSWIDTH;
   if (lastPos != pos) {
     lastPos = pos;
     sevenSegWrite(pos+1);
-    //sendPos(encoderValue);
+  }
+  if (lastValue != encoderValue) {
+    Serial.println(encoderValue, DEC);
+    lastValue = encoderValue;
+    sendPos(encoderValue);
   }
 }
 
 void serialEvent() {
   while(Serial.available()) {
-   nextPos = Serial.read() - 48; // pos sent as char
+    byte nextPos = Serial.read() - 48;
+    if (nextPos < 0) nextPos = 0;
+    if (nextPos > MAXPOS) nextPos = MAXPOS;
+   encoderValue = (nextPos)*25-12; // pos sent as char
   }
 }
 
@@ -115,15 +112,14 @@ void updateEncoder(){
   int sum  = (lastEncoded << 2) | encoded; //adding it to the previous encoded value
 
   if(sum == 0b1101 || sum == 0b0100 || sum == 0b0010 || sum == 0b1011) {
-    encoderValue ++;
-    if (encoderValue >= MAXSTEPS) encoderValue = MAXSTEPS-1;
+    encoderValue +=5;
+    if (encoderValue >= MAXSTEPS) encoderValue = 0;
   }
   if(sum == 0b1110 || sum == 0b0111 || sum == 0b0001 || sum == 0b1000) {
-    encoderValue --;
-    if (encoderValue < 0) encoderValue = 0;
+    encoderValue -=5;
+    if (encoderValue < 0) encoderValue = MAXSTEPS-5;
   }
   lastEncoded = encoded; //store this value for next time
-  sendPos(encoderValue);
 }
 
 void sevenSegWrite(byte digit) {
@@ -138,13 +134,12 @@ void writeDot(byte dot) {
 }
 
 void buttonPress() {
-  
+  Serial.println("Pressed!");
 }
 
-void sendPos(byte pos) {
+void sendPos(byte data) {
     Wire.beginTransmission(16); // transmit to a device
-    Serial.println(pos, DEC);
-    Wire.write(pos);          // sends one byte  
+    Wire.write(data);          // sends one byte  
     Wire.endTransmission();    // stop transmitting
-    currentPos = pos;
+    currentPos = data;
 }
